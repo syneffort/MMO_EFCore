@@ -72,46 +72,22 @@ namespace MMO_EFCore
             };
         }
 
-        // 특정 플레이어가 소지한 아이템들의 CreatedDate 수정
-        public static void UpdateDate()
+        public static void ShowItems()
         {
-            Console.WriteLine("Input Player Name");
+            Console.WriteLine("플레이어 이름을 입력하세요");
             Console.Write("> ");
             string name = Console.ReadLine();
 
-            using (AppDbContext db = new AppDbContext())
+            using (var db = new AppDbContext())
             {
-                var items = db.Items.Include(i => i.Owner)
-                            .Where(i => i.Owner.Name == name);
-
-                foreach (Item item in items)
+                foreach (Player player in db.Players.AsNoTracking().Include(p => p.Items).Where(p => p.Name == name))
                 {
-                    item.CreateDate = DateTime.Now;
+                    foreach (Item item in player.Items)
+                    {
+                        Console.WriteLine($"{item.TemplateId}");
+                    }
                 }
-
-                db.SaveChanges();
             }
-
-            ReadAll();
-        }
-
-        public static void DeleteItem()
-        {
-            Console.WriteLine("Input Player Name");
-            Console.Write("> ");
-            string name = Console.ReadLine();
-
-            using (AppDbContext db = new AppDbContext())
-            {
-                var items = db.Items.Include(i => i.Owner)
-                            .Where(i => i.Owner.Name == name);
-
-                db.Items.RemoveRange(items);
-
-                db.SaveChanges();
-            }
-
-            ReadAll();
         }
     }
 }
