@@ -78,16 +78,16 @@ namespace MMO_EFCore
             Console.Write("> ");
             string name = Console.ReadLine();
 
-            using (var db = new AppDbContext())
-            {
-                foreach (Player player in db.Players.AsNoTracking().Include(p => p.Items).Where(p => p.Name == name))
-                {
-                    foreach (Item item in player.Items)
-                    {
-                        Console.WriteLine($"{item.TemplateId}");
-                    }
-                }
-            }
+            //using (var db = new AppDbContext())
+            //{
+            //    foreach (Player player in db.Players.AsNoTracking().Include(p => p.Items).Where(p => p.Name == name))
+            //    {
+            //        foreach (Item item in player.Items)
+            //        {
+            //            Console.WriteLine($"{item.TemplateId}");
+            //        }
+            //    }
+            //}
         }
     }
 }

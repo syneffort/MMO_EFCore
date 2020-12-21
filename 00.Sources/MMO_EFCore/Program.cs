@@ -17,7 +17,7 @@ namespace MMO_EFCore
             while (true)
             {
                 Console.Write("> ");
-                string command = Console.ReadLine();
+                string command = Console.ReadLine().ToLower();
                 switch (command)
                 {
                     case "0":
