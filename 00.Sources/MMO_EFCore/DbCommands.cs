@@ -121,7 +121,7 @@ namespace MMO_EFCore
         // 특정 길드에 있는 길드원의 수 조회
 
         // 장점 : 필요한 정보만 추출해서 로딩
-        // 단점 : Select 구문 내부에 무명클래스 생성일 직접 해야함
+        // 단점 : Select 구문 내부에 (무명)클래스 생성일 직접 해야함
         public static void SelectLoading()
         {
             Console.WriteLine("길드 이름을 입력하세요");
@@ -130,16 +130,12 @@ namespace MMO_EFCore
 
             using (AppDbContext db = new AppDbContext())
             {
-                var info =  db.Guilds
+                GuildDto info =  db.Guilds
                     .Where(g => g.GuildName == name)
-                    .Select(g => new
-                    {
-                        Name = g.GuildName,
-                        MemberCount = g.Members.Count
-                    })
+                    .MapGuildToDto()
                     .First();
 
-                Console.Write($"GuildName({info.Name}) MemberCount({info.MemberCount})");
+                Console.WriteLine($"GuildName({info.Name}) MemberCount({info.MemberCount})");
             };
         }
     }
