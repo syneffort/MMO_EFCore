@@ -18,8 +18,8 @@ namespace MMO_EFCore
         // DbSet<T> -> EF Core 에게 테이블 정보 알림
         // 여기에 선언된 프로퍼티 이름이 우선하여 테이블 이름으로 지정됨
         public DbSet<Item> Items { get; set; }
-        
         public DbSet<Player> Players { get; set; }
+        public DbSet<Guild> Guilds { get; set; }
 
         public const string ConnectionString = @"Data Source=(localdb)\MSSQLLocalDB;Initial Catalog=EfCoreDb;Integrated Security=True;Connect Timeout=30;Encrypt=False;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False";
         protected override void OnConfiguring(DbContextOptionsBuilder options)

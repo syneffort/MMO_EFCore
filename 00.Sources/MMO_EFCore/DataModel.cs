@@ -34,6 +34,15 @@ namespace MMO_EFCore
         public int PlayerId { get; set; }
         public string Name { get; set; }
 
-        public Item Items { get; set; }
+        public Item Item { get; set; }
+        public Guild Guild { get; set; }
+    }
+
+    [Table("Guild")]
+    public class Guild
+    {
+        public int GuildId { get; set; }
+        public string GuildName { get; set; }
+        public ICollection<Player> Members { get; set; }
     }
 }

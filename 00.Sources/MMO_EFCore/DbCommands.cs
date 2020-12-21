@@ -28,10 +28,9 @@ namespace MMO_EFCore
 
         public static void CreateTestData(AppDbContext db)
         {
-            Player player = new Player()
-            {
-                Name = "SynK"
-            };
+            Player synk = new Player() { Name = "SynK" };
+            Player faker = new Player() { Name = "Faker" };
+            Player deft = new Player() { Name = "Deft" };
 
             List<Item> Items = new List<Item>()
             {
@@ -39,55 +38,109 @@ namespace MMO_EFCore
                 {
                     TemplateId = 101,
                     CreateDate = DateTime.Now,
-                    Owner = player
+                    Owner = synk
                 },
                 new Item()
                 {
                     TemplateId = 102,
                     CreateDate = DateTime.Now,
-                    Owner = player
+                    Owner = faker
                 },
                 new Item()
                 {
                     TemplateId = 103,
                     CreateDate = DateTime.Now,
-                    Owner = new Player() { Name = "Faker" }
+                    Owner = deft
                 },
             };
 
+            Guild guild = new Guild()
+            {
+                GuildName = "T1",
+                Members = new List<Player>() { synk, faker, deft }
+            };
+
             db.Items.AddRange(Items);
+            db.Guilds.Add(guild);
             db.SaveChanges();
         }
 
-        public static void ReadAll()
+        // 특정 길드에 있는 길드원이 가진 모든 아이템 조회
+
+        // 장점 : DB 접근 1회로 필요한 사항 다 로딩 (JOIN)
+        // 단점 : 불필요한 내용까지 로딩
+        public static void EagerLoading()
         {
+            Console.WriteLine("길드 이름을 입력하세요");
+            Console.Write("> ");
+            string name = Console.ReadLine();
+
             using (AppDbContext db = new AppDbContext())
             {
-                // AsNoTracking : ReadOnly => Tracking Snapshot 이라는 데이터 변경 탐지기능 때문
-                // Include : Eager Loading (즉시 로딩)
-                foreach (Item item in db.Items.AsNoTracking().Include(i => i.Owner))
+                Guild guild = db.Guilds.AsNoTracking()
+                    .Where(g => g.GuildName == name)
+                    .Include(g => g.Members)
+                        .ThenInclude(p => p.Item)
+                    .First();
+
+                foreach (Player player in guild.Members)
                 {
-                    Console.WriteLine($"TempalteId({item.TemplateId}) Owner({item.Owner.Name}) Created({item.CreateDate})");
+                    Console.WriteLine($"TemplateId({player.Item.TemplateId}) Owner({player.Name})");
                 }
             };
         }
 
-        public static void ShowItems()
+        // 장점 : 필요한 내용만 로딩 가능
+        // 단점 : DB 접근 비용이 상대적을 ㅗ큼
+        public static void ExplicitLoading()
         {
-            Console.WriteLine("플레이어 이름을 입력하세요");
+            Console.WriteLine("길드 이름을 입력하세요");
             Console.Write("> ");
             string name = Console.ReadLine();
 
-            //using (var db = new AppDbContext())
-            //{
-            //    foreach (Player player in db.Players.AsNoTracking().Include(p => p.Items).Where(p => p.Name == name))
-            //    {
-            //        foreach (Item item in player.Items)
-            //        {
-            //            Console.WriteLine($"{item.TemplateId}");
-            //        }
-            //    }
-            //}
+            using (AppDbContext db = new AppDbContext())
+            {
+                Guild guild = db.Guilds
+                    .Where(g => g.GuildName == name)
+                    .First();
+
+                // 명시적 로딩
+                db.Entry(guild).Collection(g => g.Members).Load();
+                foreach (Player player in guild.Members)
+                {
+                    db.Entry(player).Reference(p => p.Item).Load();
+                }
+
+                foreach (Player player in guild.Members)
+                {
+                    Console.WriteLine($"TemplateId({player.Item.TemplateId}) Owner({player.Name})");
+                }
+            };
+        }
+
+        // 특정 길드에 있는 길드원의 수 조회
+
+        // 장점 : 필요한 정보만 추출해서 로딩
+        // 단점 : Select 구문 내부에 무명클래스 생성일 직접 해야함
+        public static void SelectLoading()
+        {
+            Console.WriteLine("길드 이름을 입력하세요");
+            Console.Write("> ");
+            string name = Console.ReadLine();
+
+            using (AppDbContext db = new AppDbContext())
+            {
+                var info =  db.Guilds
+                    .Where(g => g.GuildName == name)
+                    .Select(g => new
+                    {
+                        Name = g.GuildName,
+                        MemberCount = g.Members.Count
+                    })
+                    .First();
+
+                Console.Write($"GuildName({info.Name}) MemberCount({info.MemberCount})");
+            };
         }
     }
 }
