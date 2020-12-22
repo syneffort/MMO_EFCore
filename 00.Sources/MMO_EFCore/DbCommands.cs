@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage;
@@ -26,11 +25,30 @@ namespace MMO_EFCore
             };
         }
 
+        // Entity State
+        // 0) Detached : Notracking 상태, 추적되지 않아 Savechange 해도 영향 djqtdma
+        // 1) Unchanged : DB에는 있으나 수정 사항은 없음, Savechange 해도 영향 X
+        // 2) Deleted : DB에는 있으나 삭제되어야 함, Savechange 시 적용
+        // 3) Modified : DB에 있고 수정이 발생함, Savechange 시 적용
+        // 4) Added : DB에는 아직 없음, Savechange 시 적용
+
+        // SavaChanges 호출하면?
+        // 1) 추가된 객체들의 상태가 Unchanged로 바뀜
+        // 2) SQL Identity로 PK 관리
+        // - 데이터 추가 후 ID 받아와서 객체의 ID 프로퍼티를 채워줌 (SaveChange 이 전에는 ID를 알 수 없음)
+        // - Relationship 참고해서, FK 및 객체 참조 연결
+
+        // 이미 존재하는 사용자를 연동하려면?
+        // 1) Tracked Instance(추적되고 있는 객체)를 얻어옴
+        // 2) 객체 연결
+
         public static void CreateTestData(AppDbContext db)
         {
             Player synk = new Player() { Name = "SynK" };
             Player faker = new Player() { Name = "Faker" };
             Player deft = new Player() { Name = "Deft" };
+
+            //Console.WriteLine(db.Entry(synk).State); // Detached
 
             List<Item> Items = new List<Item>()
             {
@@ -62,81 +80,25 @@ namespace MMO_EFCore
 
             db.Items.AddRange(Items);
             db.Guilds.Add(guild);
+
+            //Console.WriteLine(db.Entry(synk).State); // Added
+
             db.SaveChanges();
-        }
 
-        // 특정 길드에 있는 길드원이 가진 모든 아이템 조회
-
-        // 장점 : DB 접근 1회로 필요한 사항 다 로딩 (JOIN)
-        // 단점 : 불필요한 내용까지 로딩
-        public static void EagerLoading()
-        {
-            Console.WriteLine("길드 이름을 입력하세요");
-            Console.Write("> ");
-            string name = Console.ReadLine();
-
-            using (AppDbContext db = new AppDbContext())
             {
-                Guild guild = db.Guilds.AsNoTracking()
-                    .Where(g => g.GuildName == name)
-                    .Include(g => g.Members)
-                        .ThenInclude(p => p.Item)
-                    .First();
-
-                foreach (Player player in guild.Members)
+                Player owner = db.Players.Where(p => p.Name == "SynK").First();
+                Item item = new Item()
                 {
-                    Console.WriteLine($"TemplateId({player.Item.TemplateId}) Owner({player.Name})");
-                }
-            };
-        }
+                    TemplateId = 300,
+                    CreateDate = DateTime.Now,
+                    Owner = owner
+                };
+                db.Items.Add(item);
 
-        // 장점 : 필요한 내용만 로딩 가능
-        // 단점 : DB 접근 비용이 상대적을 ㅗ큼
-        public static void ExplicitLoading()
-        {
-            Console.WriteLine("길드 이름을 입력하세요");
-            Console.Write("> ");
-            string name = Console.ReadLine();
+                db.SaveChanges();
+            }
 
-            using (AppDbContext db = new AppDbContext())
-            {
-                Guild guild = db.Guilds
-                    .Where(g => g.GuildName == name)
-                    .First();
-
-                // 명시적 로딩
-                db.Entry(guild).Collection(g => g.Members).Load();
-                foreach (Player player in guild.Members)
-                {
-                    db.Entry(player).Reference(p => p.Item).Load();
-                }
-
-                foreach (Player player in guild.Members)
-                {
-                    Console.WriteLine($"TemplateId({player.Item.TemplateId}) Owner({player.Name})");
-                }
-            };
-        }
-
-        // 특정 길드에 있는 길드원의 수 조회
-
-        // 장점 : 필요한 정보만 추출해서 로딩
-        // 단점 : Select 구문 내부에 (무명)클래스 생성일 직접 해야함
-        public static void SelectLoading()
-        {
-            Console.WriteLine("길드 이름을 입력하세요");
-            Console.Write("> ");
-            string name = Console.ReadLine();
-
-            using (AppDbContext db = new AppDbContext())
-            {
-                GuildDto info =  db.Guilds
-                    .Where(g => g.GuildName == name)
-                    .MapGuildToDto()
-                    .First();
-
-                Console.WriteLine($"GuildName({info.Name}) MemberCount({info.MemberCount})");
-            };
+            //Console.WriteLine(db.Entry(synk).State); // Unchanged
         }
     }
 }
