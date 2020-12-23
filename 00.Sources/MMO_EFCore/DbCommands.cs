@@ -4,6 +4,7 @@ using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage;
+using Newtonsoft.Json;
 
 namespace MMO_EFCore
 {
@@ -76,21 +77,78 @@ namespace MMO_EFCore
             db.SaveChanges();
         }
 
-        // Update 3단계
-        // 1) Tracked entity 가져오기
-        // 2) Entity 클래스의 프로퍼티 변경 (set)
-        // 3) Savechanges 호출 --> DetectChang에서 최초 Sanpshot / 현재 Snapshot 비교해서 변경사항만 저장
+        // Connected / Disconnected Update
+        // Disconnected : 업데이트 단계가 끊기면서 실행됨 (Rest API 등)
+        // 처리하는 2가지 방법
+        // 1) Reload 방식,필요한 정보만 보내서 단계별 처리
+        // 2) Full Update 방식, 모든 정보를 다 보내고 받아서 전체를 업데이트
 
-        public static void UpdateTest()
+        public static void ShowGuilds()
         {
             using (AppDbContext db = new AppDbContext())
             {
-                Guild guild = db.Guilds.Single(g => g.GuildName == "T1");
+                foreach (GuildDto guild in db.Guilds.MapGuildToDto())
+                {
+                    Console.WriteLine($"GuildId({guild.GuildId}) GuildName({guild.Name}) MemberCount({guild.MemberCount})");
+                }
+            };
+        }
 
-                guild.GuildName = "DWG";
+        // 장점 : 최소한의 정보로 업데이트
+        // 단점 : 불러오기를 2번 수행해야 함
+        public static void UpdateByReload()
+        {
+            ShowGuilds();
 
+            // 외부에서 수정을 원하는 정보를 넘겨줌
+            Console.WriteLine("Input GuildId");
+            Console.Write("> ");
+            int id = int.Parse(Console.ReadLine());
+            Console.WriteLine("Input GuildName");
+            Console.Write("> ");
+            string name = Console.ReadLine();
+
+            using (AppDbContext db = new AppDbContext())
+            {
+                Guild guild = db.Find<Guild>(id);
+                guild.GuildName = name;
                 db.SaveChanges();
             }
+
+            Console.WriteLine("--- Update Complete ---");
+            ShowGuilds();
+        }
+
+        // 장점 : 다시 불러오지 않고 바로 업데이트 가능
+        // 단점 : 모든 정보가 필요하고 보안 이슈 발생 가능
+        public static string MakeUpdateJsonStr()
+        {
+            var jsonStr = "{\"GuildId\":1, \"GuildName\":\"Hello\", \"Members\":null}";
+            return jsonStr;
+        }
+
+        public static void UpdateByFull()
+        {
+            ShowGuilds();
+
+            //string jsonStr = MakeUpdateJsonStr();
+            //Guild guild = JsonConvert.DeserializeObject<Guild>(jsonStr);
+
+            Guild guild = new Guild()
+            {
+                GuildId = 1,
+                GuildName = "TestGuild",
+                Members = null
+            };
+
+            using (AppDbContext db = new AppDbContext())
+            {
+                db.Guilds.Update(guild);
+                db.SaveChanges();
+            }
+
+            Console.WriteLine("--- Update Complete ---");
+            ShowGuilds();
         }
     }
 }

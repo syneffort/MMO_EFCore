@@ -14,6 +14,7 @@ namespace MMO_EFCore
         {
             return guild.Select(g => new GuildDto()
             {
+                GuildId = g.GuildId,
                 Name = g.GuildName,
                 MemberCount = g.Members.Count
             });
