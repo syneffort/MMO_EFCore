@@ -11,8 +11,7 @@ namespace MMO_EFCore
             // CRUD
             Console.WriteLine("명령어를 입력하세요");
             Console.WriteLine("[0] Force reset");
-            Console.WriteLine("[1] Update (Reload)");
-            Console.WriteLine("[2] Update (Full)");
+            Console.WriteLine("[1] Test");
 
             while (true)
             {
@@ -24,10 +23,9 @@ namespace MMO_EFCore
                         DbCommands.InitializeDB(forceReset: true);
                         break;
                     case "1":
-                        DbCommands.UpdateByReload();
+                        DbCommands.Test();
                         break;
                     case "2":
-                        DbCommands.UpdateByFull();
                         break;
                     case "3":
                         break;

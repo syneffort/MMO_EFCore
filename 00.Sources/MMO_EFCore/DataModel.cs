@@ -22,7 +22,8 @@ namespace MMO_EFCore
 
         // 다른 클래스를 참조 -> FK (Navigational Property)
         //public int OwnerId { get; set; } // Convention 방식으로 플레이어 객체와 연동
-        [ForeignKey("OnerId")]
+        //[ForeignKey("OnerId")]
+        public int? OwnerId { get; set; }
         public Player Owner { get; set; }
     }
 

@@ -77,78 +77,47 @@ namespace MMO_EFCore
             db.SaveChanges();
         }
 
-        // Connected / Disconnected Update
-        // Disconnected : 업데이트 단계가 끊기면서 실행됨 (Rest API 등)
-        // 처리하는 2가지 방법
-        // 1) Reload 방식,필요한 정보만 보내서 단계별 처리
-        // 2) Full Update 방식, 모든 정보를 다 보내고 받아서 전체를 업데이트
+        // Q) Dependent 데이터가 Principal 데이터 없이 존재 할 수 있을까?
+        //  1> 주인이 없는 아이템은 불가능 : FK로 참조하고 있는 데이터도 삭제됨
+        //  2> 주인이 없는 아이템이 가능 : FK로 참조하고 있는 데이터 유지됨
+        // -> 2가지 케이스를 어떻게 구분해서 설정? => Nullable
+        // FK 를 그냥 int로 설정시 1> 케이스, Nullable 설정 시 2> 케이스
 
-        public static void ShowGuilds()
+        public static void ShowItems()
         {
             using (AppDbContext db = new AppDbContext())
             {
-                foreach (GuildDto guild in db.Guilds.MapGuildToDto())
+                foreach (var item in db.Items.Include(i => i.Owner).ToList())
                 {
-                    Console.WriteLine($"GuildId({guild.GuildId}) GuildName({guild.Name}) MemberCount({guild.MemberCount})");
+                    if (item.Owner == null)
+                        Console.WriteLine($"ItemId({item.ItemId}) TemplateId({item.TemplateId}) Owner(0)");
+                    else
+                        Console.WriteLine($"ItemId({item.ItemId}) TemplateId({item.TemplateId}) Owner({item.Owner.PlayerId}, {item.Owner.Name})");
                 }
-            };
+            }
         }
 
-        // 장점 : 최소한의 정보로 업데이트
-        // 단점 : 불러오기를 2번 수행해야 함
-        public static void UpdateByReload()
+        public static void Test()
         {
-            ShowGuilds();
+            ShowItems();
 
-            // 외부에서 수정을 원하는 정보를 넘겨줌
-            Console.WriteLine("Input GuildId");
-            Console.Write("> ");
+            Console.WriteLine("Input delete player id");
+            Console.Write(" > ");
             int id = int.Parse(Console.ReadLine());
-            Console.WriteLine("Input GuildName");
-            Console.Write("> ");
-            string name = Console.ReadLine();
 
             using (AppDbContext db = new AppDbContext())
             {
-                Guild guild = db.Find<Guild>(id);
-                guild.GuildName = name;
+                Player player = db.Players
+                    .Include(p => p.Item)
+                    .Single(p => p.PlayerId == id);
+
+                db.Players.Remove(player);
                 db.SaveChanges();
             }
 
-            Console.WriteLine("--- Update Complete ---");
-            ShowGuilds();
-        }
+            Console.WriteLine("--- Test complete ---");
 
-        // 장점 : 다시 불러오지 않고 바로 업데이트 가능
-        // 단점 : 모든 정보가 필요하고 보안 이슈 발생 가능
-        public static string MakeUpdateJsonStr()
-        {
-            var jsonStr = "{\"GuildId\":1, \"GuildName\":\"Hello\", \"Members\":null}";
-            return jsonStr;
-        }
-
-        public static void UpdateByFull()
-        {
-            ShowGuilds();
-
-            //string jsonStr = MakeUpdateJsonStr();
-            //Guild guild = JsonConvert.DeserializeObject<Guild>(jsonStr);
-
-            Guild guild = new Guild()
-            {
-                GuildId = 1,
-                GuildName = "TestGuild",
-                Members = null
-            };
-
-            using (AppDbContext db = new AppDbContext())
-            {
-                db.Guilds.Update(guild);
-                db.SaveChanges();
-            }
-
-            Console.WriteLine("--- Update Complete ---");
-            ShowGuilds();
+            ShowItems();
         }
     }
 }
