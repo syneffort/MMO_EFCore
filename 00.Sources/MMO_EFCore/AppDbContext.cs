@@ -32,6 +32,11 @@ namespace MMO_EFCore
             // 앞으로 Item entity에 접근할 때 항상 사용되는 모델 레벨의 필터링 구현
             // 필터를 무시하고 싶으면 IgnoreQueryFilter 사용하면 됨
             builder.Entity<Item>().HasQueryFilter(i => i.SoftDeleted == false);
+
+            builder.Entity<Player>()
+                .HasIndex(p => p.Name)
+                .HasDatabaseName("Index_Person_Name")
+                .IsUnique();
         }
     }
 }
