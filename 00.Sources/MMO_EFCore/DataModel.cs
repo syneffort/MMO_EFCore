@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -6,11 +7,35 @@ using System.Text;
 
 namespace MMO_EFCore
 {
+    public struct ItemOption
+    {
+        public int str;
+        public int dex;
+        public int hp;
+    }
+
     // Entity 클래스 이름 = 테이블 이름 = Item
     // 별도 테이블 이름 지정 시 attribute 지정
     [Table("Item")]
     public class Item
     {
+        private string _jsonData;
+        public string JsonData
+        { 
+            get { return _jsonData; }
+            //set { _jsonData = value; } 
+        }
+
+        public void SetOption(ItemOption option)
+        {
+            _jsonData = JsonConvert.SerializeObject(option);
+        }
+
+        public ItemOption GetOption()
+        {
+            return JsonConvert.DeserializeObject<ItemOption>(_jsonData);
+        }
+
         public bool SoftDeleted { get; set; }
 
         // PK

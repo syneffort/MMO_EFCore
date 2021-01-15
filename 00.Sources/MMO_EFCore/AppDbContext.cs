@@ -38,6 +38,7 @@ namespace MMO_EFCore
                 .HasDatabaseName("Index_Person_Name")
                 .IsUnique();
 
+            // Relationship
             builder.Entity<Player>()
                 .HasMany(p => p.CreatedItems)
                 .WithOne(i => i.Creator)
@@ -47,6 +48,12 @@ namespace MMO_EFCore
                 .HasOne(p => p.OwnedItem)
                 .WithOne(i => i.Owner)
                 .HasForeignKey<Item>(i => i.OwnerId);
+
+            // Shadow Property
+            builder.Entity<Item>().Property<DateTime>("RecoveredDate");
+
+            // Backing Field
+            builder.Entity<Item>().Property(i => i.JsonData).HasField("_jsonData");
         }
     }
 }
