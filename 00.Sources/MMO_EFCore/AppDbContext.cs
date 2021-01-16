@@ -21,6 +21,8 @@ namespace MMO_EFCore
         public DbSet<Player> Players { get; set; }
         public DbSet<Guild> Guilds { get; set; }
 
+        public DbSet<EventItem> EventItems { get; set;  }
+
         public const string ConnectionString = @"Data Source=(localdb)\MSSQLLocalDB;Initial Catalog=EfCoreDb;Integrated Security=True;Connect Timeout=30;Encrypt=False;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False";
         protected override void OnConfiguring(DbContextOptionsBuilder options)
         {
@@ -38,22 +40,25 @@ namespace MMO_EFCore
                 .HasDatabaseName("Index_Person_Name")
                 .IsUnique();
 
-            // Relationship
-            builder.Entity<Player>()
-                .HasMany(p => p.CreatedItems)
-                .WithOne(i => i.Creator)
-                .HasForeignKey(i => i.CreatorId);
+            // Owned Type
+            builder.Entity<Item>()
+                .OwnsOne(i => i.Option)
+                .ToTable("ItemOption");
 
-            builder.Entity<Player>()
-                .HasOne(p => p.OwnedItem)
-                .WithOne(i => i.Owner)
-                .HasForeignKey<Item>(i => i.OwnerId);
+            // TPH
+            builder.Entity<Item>()
+                .HasDiscriminator(i => i.Type)
+                .HasValue<Item>(ItemType.NormalItem)
+                .HasValue<EventItem>(ItemType.EventItem);
 
-            // Shadow Property
-            builder.Entity<Item>().Property<DateTime>("RecoveredDate");
+            // Table Splitting
+            builder.Entity<Item>()
+                .HasOne(i => i.Detail)
+                .WithOne()
+                .HasForeignKey<ItemDetail>(i => i.ItemDetailId);
 
-            // Backing Field
-            builder.Entity<Item>().Property(i => i.JsonData).HasField("_jsonData");
+            builder.Entity<Item>().ToTable("Item");
+            builder.Entity<ItemDetail>().ToTable("Item");
         }
     }
 }

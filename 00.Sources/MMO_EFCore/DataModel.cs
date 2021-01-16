@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -7,11 +8,23 @@ using System.Text;
 
 namespace MMO_EFCore
 {
-    public struct ItemOption
+    public class ItemOption
     {
-        public int str;
-        public int dex;
-        public int hp;
+        public int Str { get; set; }
+        public int Dex { get; set; }
+        public int Hp { get; set; }
+    }
+
+    public class ItemDetail
+    {
+        public int ItemDetailId { get; set; }
+        public string Description { get; set; }
+    }
+
+    public enum ItemType
+    {
+        NormalItem,
+        EventItem,
     }
 
     // Entity 클래스 이름 = 테이블 이름 = Item
@@ -19,24 +32,13 @@ namespace MMO_EFCore
     [Table("Item")]
     public class Item
     {
-        private string _jsonData;
-        public string JsonData
-        { 
-            get { return _jsonData; }
-            //set { _jsonData = value; } 
-        }
-
-        public void SetOption(ItemOption option)
-        {
-            _jsonData = JsonConvert.SerializeObject(option);
-        }
-
-        public ItemOption GetOption()
-        {
-            return JsonConvert.DeserializeObject<ItemOption>(_jsonData);
-        }
+        public ItemType Type { get; set; }
 
         public bool SoftDeleted { get; set; }
+
+        public ItemOption Option { get; set; }
+
+        public ItemDetail Detail { get; set; }
 
         // PK
         public int ItemId { get; set; }
@@ -46,11 +48,12 @@ namespace MMO_EFCore
         // 다른 클래스를 참조 -> FK (Navigational Property)
         //public int OwnerId { get; set; } // Convention 방식으로 플레이어 객체와 연동
         public int OwnerId { get; set; }
-        
         public Player Owner { get; set; }
+    }
 
-        public int? CreatorId { get; set; }
-        public Player Creator { get; set; }
+    public class EventItem : Item
+    {
+        public DateTime DestroyDate { get; set; }
     }
 
     // Entity 클래스 이름 = 테이블 이름 = Player
@@ -65,8 +68,6 @@ namespace MMO_EFCore
 
         //[InverseProperty("Owner")]
         public Item OwnedItem { get; set; }
-        //[InverseProperty("Creator")]
-        public ICollection<Item> CreatedItems { get; set; }
 
         public Guild Guild { get; set; }
     }
