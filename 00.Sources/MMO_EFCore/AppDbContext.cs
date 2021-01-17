@@ -21,8 +21,6 @@ namespace MMO_EFCore
         public DbSet<Player> Players { get; set; }
         public DbSet<Guild> Guilds { get; set; }
 
-        public DbSet<EventItem> EventItems { get; set;  }
-
         public const string ConnectionString = @"Data Source=(localdb)\MSSQLLocalDB;Initial Catalog=EfCoreDb;Integrated Security=True;Connect Timeout=30;Encrypt=False;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False";
         protected override void OnConfiguring(DbContextOptionsBuilder options)
         {
@@ -40,25 +38,10 @@ namespace MMO_EFCore
                 .HasDatabaseName("Index_Person_Name")
                 .IsUnique();
 
-            // Owned Type
             builder.Entity<Item>()
-                .OwnsOne(i => i.Option)
-                .ToTable("ItemOption");
-
-            // TPH
-            builder.Entity<Item>()
-                .HasDiscriminator(i => i.Type)
-                .HasValue<Item>(ItemType.NormalItem)
-                .HasValue<EventItem>(ItemType.EventItem);
-
-            // Table Splitting
-            builder.Entity<Item>()
-                .HasOne(i => i.Detail)
-                .WithOne()
-                .HasForeignKey<ItemDetail>(i => i.ItemDetailId);
-
-            builder.Entity<Item>().ToTable("Item");
-            builder.Entity<ItemDetail>().ToTable("Item");
+                .Metadata
+                .FindNavigation("Reviews")
+                .SetPropertyAccessMode(PropertyAccessMode.Field);
         }
     }
 }

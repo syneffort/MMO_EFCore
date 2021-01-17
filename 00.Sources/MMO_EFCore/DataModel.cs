@@ -4,43 +4,22 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
 using System.Text;
 
 namespace MMO_EFCore
 {
-    public class ItemOption
+    public class ItemReview
     {
-        public int Str { get; set; }
-        public int Dex { get; set; }
-        public int Hp { get; set; }
+        public int ItemReviewId { get; set; }
+        public int Score { get; set; }
     }
 
-    public class ItemDetail
-    {
-        public int ItemDetailId { get; set; }
-        public string Description { get; set; }
-    }
-
-    public enum ItemType
-    {
-        NormalItem,
-        EventItem,
-    }
-
-    // Entity 클래스 이름 = 테이블 이름 = Item
-    // 별도 테이블 이름 지정 시 attribute 지정
     [Table("Item")]
     public class Item
     {
-        public ItemType Type { get; set; }
-
         public bool SoftDeleted { get; set; }
 
-        public ItemOption Option { get; set; }
-
-        public ItemDetail Detail { get; set; }
-
-        // PK
         public int ItemId { get; set; }
         public int TemplateId { get; set; }
         public DateTime CreateDate { get; set; }
@@ -49,11 +28,23 @@ namespace MMO_EFCore
         //public int OwnerId { get; set; } // Convention 방식으로 플레이어 객체와 연동
         public int OwnerId { get; set; }
         public Player Owner { get; set; }
-    }
+        
+        public double? AverageScore { get; set; }
 
-    public class EventItem : Item
-    {
-        public DateTime DestroyDate { get; set; }
+        private readonly List<ItemReview> _reviews = new List<ItemReview>();
+        public IEnumerable<ItemReview> Reviews { get { return _reviews.ToList(); } }
+
+        public void AddReview(ItemReview review)
+        {
+            _reviews.Add(review);
+            AverageScore = _reviews.Average(r => r.Score);
+        }
+
+        public void RemoveReview(ItemReview review)
+        {
+            _reviews.Remove(review);
+            AverageScore = _reviews.Any() ? _reviews.Average(r => r.Score) : (double?)null;
+        }
     }
 
     // Entity 클래스 이름 = 테이블 이름 = Player

@@ -49,12 +49,11 @@ namespace MMO_EFCore
                     CreateDate = DateTime.Now,
                     Owner = synk
                 },
-                new EventItem()
+                new Item()
                 {
                     TemplateId = 102,
                     CreateDate = DateTime.Now,
-                    Owner = faker,
-                    DestroyDate = DateTime.Now
+                    Owner = faker
                 },
                 new Item()
                 {
@@ -64,13 +63,11 @@ namespace MMO_EFCore
                 },
             };
 
-            // Test Owned Type
-            Items[0].Option = new ItemOption() { Dex = 1, Hp = 2, Str = 3 };
-
-            Items[2].Detail = new ItemDetail()
-            {
-                Description = "This is good item."
-            };
+            // Backing field & Relationship
+            Items[0].AddReview(new ItemReview() { Score = 5 });
+            Items[0].AddReview(new ItemReview() { Score = 4 });
+            Items[0].AddReview(new ItemReview() { Score = 1 });
+            Items[0].AddReview(new ItemReview() { Score = 5 });
 
             Guild guild = new Guild()
             {
@@ -90,7 +87,7 @@ namespace MMO_EFCore
         {
             using (AppDbContext db = new AppDbContext())
             {
-                foreach (var item in db.Items.Include(i => i.Owner).Include(i => i.Detail).IgnoreQueryFilters().ToList())
+                foreach (var item in db.Items.Include(i => i.Owner).IgnoreQueryFilters().ToList())
                 {
                    if (item.SoftDeleted)
                     {
@@ -98,17 +95,10 @@ namespace MMO_EFCore
                     }
                    else
                     {
-                        if (item.Option != null)
-                            Console.Write($"STR(+{item.Option.Str})");
-
-                        // Test TPH
-                        EventItem eventItem = item as EventItem;
-                        if (eventItem != null)
-                            Console.Write($"DestroyDate({eventItem.DestroyDate}) ");
-
-                        // Test table splitting
-                        if (item.Detail != null)
-                            Console.Write($"Detail({item.Detail.Description}) ");
+                        if (item.AverageScore == null)
+                            Console.Write("Score(null) ");
+                        else
+                            Console.Write($"Score({item.AverageScore}) ");
 
                         if (item.Owner == null)
                             Console.WriteLine($"ItemId({item.ItemId}) TemplateId({item.TemplateId}) Owner(0)");
