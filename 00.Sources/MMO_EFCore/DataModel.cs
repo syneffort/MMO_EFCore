@@ -28,23 +28,8 @@ namespace MMO_EFCore
         //public int OwnerId { get; set; } // Convention 방식으로 플레이어 객체와 연동
         public int OwnerId { get; set; }
         public Player Owner { get; set; }
-        
-        public double? AverageScore { get; set; }
 
-        private readonly List<ItemReview> _reviews = new List<ItemReview>();
-        public IEnumerable<ItemReview> Reviews { get { return _reviews.ToList(); } }
-
-        public void AddReview(ItemReview review)
-        {
-            _reviews.Add(review);
-            AverageScore = _reviews.Average(r => r.Score);
-        }
-
-        public void RemoveReview(ItemReview review)
-        {
-            _reviews.Remove(review);
-            AverageScore = _reviews.Any() ? _reviews.Average(r => r.Score) : (double?)null;
-        }
+        public ICollection<ItemReview> Reviews { get; set; }
     }
 
     // Entity 클래스 이름 = 테이블 이름 = Player

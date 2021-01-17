@@ -28,6 +28,23 @@ namespace MMO_EFCore
                 db.Database.EnsureDeleted();
                 db.Database.EnsureCreated();
 
+                string command =
+                    @"  CREATE FUNCTION GetAverageReviewScore (@itemId INT) RETURNS FLOAT
+                        AS
+                        BEGIN
+
+                        DECLARE @result AS FLOAT
+
+                        SELECT @result = AVG(CAST([Score] AS FLOAT))
+                        FROM ItemReview AS r
+                        WHERE @itemId = r.ItemId
+
+                        RETURN @result
+
+                        END";
+
+                db.Database.ExecuteSqlRaw(command);
+
                 CreateTestData(db);
                 Console.WriteLine("DB was Initialized");
             };
@@ -63,11 +80,19 @@ namespace MMO_EFCore
                 },
             };
 
-            // Backing field & Relationship
-            Items[0].AddReview(new ItemReview() { Score = 5 });
-            Items[0].AddReview(new ItemReview() { Score = 4 });
-            Items[0].AddReview(new ItemReview() { Score = 1 });
-            Items[0].AddReview(new ItemReview() { Score = 5 });
+            Items[0].Reviews = new List<ItemReview>()
+            {
+                new ItemReview() { Score = 5 },
+                new ItemReview() { Score = 3 },
+                new ItemReview() { Score = 3 }
+            };
+
+            Items[1].Reviews = new List<ItemReview>()
+            {
+                new ItemReview() { Score = 1 },
+                new ItemReview() { Score = 2 },
+                new ItemReview() { Score = 1 }
+            };
 
             Guild guild = new Guild()
             {
@@ -95,11 +120,6 @@ namespace MMO_EFCore
                     }
                    else
                     {
-                        if (item.AverageScore == null)
-                            Console.Write("Score(null) ");
-                        else
-                            Console.Write($"Score({item.AverageScore}) ");
-
                         if (item.Owner == null)
                             Console.WriteLine($"ItemId({item.ItemId}) TemplateId({item.TemplateId}) Owner(0)");
                         else
@@ -116,6 +136,20 @@ namespace MMO_EFCore
                 foreach (var guild in db.Guilds.Include(g => g.Members).ToList())
                 {
                     Console.WriteLine($"GuildId({guild.GuildId}) GuildName({guild.GuildName}) MemberCount({guild.Members.Count})");
+                }
+            }
+        }
+
+        public static void CalcAverage()
+        {
+            using (AppDbContext db = new AppDbContext())
+            {
+                foreach (double? average in db.Items.Select(i => Program.GetAverageReviewScore(i.ItemId)))
+                {
+                    if (average == null)
+                        Console.WriteLine("No review");
+                    else
+                        Console.WriteLine($"Average({average.Value})");
                 }
             }
         }
