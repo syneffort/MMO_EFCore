@@ -25,17 +25,8 @@ namespace MMO_EFCore
         //public int OwnerId { get; set; } // Convention 방식으로 플레이어 객체와 연동
         public int OwnerId { get; set; }
         public Player Owner { get; set; }
-    }
 
-    public class PlayerNameGenerator : ValueGenerator<string>
-    {
-        public override bool GeneratesTemporaryValues => false;
-
-        public override string Next(EntityEntry entry)
-        {
-            string name = $"Player_{DateTime.Now.ToString("yyyyMMdd")}";
-            return name;
-        }
+        public int ItemGrade { get; set; }
     }
 
     // Entity 클래스 이름 = 테이블 이름 = Player

@@ -25,6 +25,7 @@ namespace MMO_EFCore
                 if (!forceReset && (db.GetService<IDatabaseCreator>() as RelationalDatabaseCreator).Exists())
                     return;
 
+                // db.Database.Migrate();
                 db.Database.EnsureDeleted();
                 db.Database.EnsureCreated();
 
