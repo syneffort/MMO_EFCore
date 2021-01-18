@@ -19,7 +19,6 @@ namespace MMO_EFCore
             Console.WriteLine("명령어를 입력하세요");
             Console.WriteLine("[0] Force reset");
             Console.WriteLine("[1] Show items");
-            Console.WriteLine("[2] Calculate average");
 
             while (true)
             {

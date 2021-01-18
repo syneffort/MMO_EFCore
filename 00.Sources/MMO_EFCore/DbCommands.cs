@@ -53,7 +53,7 @@ namespace MMO_EFCore
         public static void CreateTestData(AppDbContext db)
         {
             Player synk = new Player() { Name = "SynK" };
-            Player faker = new Player() { Name = "Faker" };
+            Player faker = new Player() { };
             Player deft = new Player() { Name = "Deft" };
 
             //Console.WriteLine(db.Entry(synk).State); // Detached
@@ -63,37 +63,19 @@ namespace MMO_EFCore
                 new Item()
                 {
                     TemplateId = 101,
-                    CreateDate = DateTime.Now,
                     Owner = synk
                 },
                 new Item()
                 {
                     TemplateId = 102,
-                    CreateDate = DateTime.Now,
                     Owner = faker
                 },
                 new Item()
                 {
                     TemplateId = 103,
-                    CreateDate = DateTime.Now,
                     Owner = deft
                 },
             };
-
-            Items[0].Reviews = new List<ItemReview>()
-            {
-                new ItemReview() { Score = 5 },
-                new ItemReview() { Score = 3 },
-                new ItemReview() { Score = 3 }
-            };
-
-            Items[1].Reviews = new List<ItemReview>()
-            {
-                new ItemReview() { Score = 1 },
-                new ItemReview() { Score = 2 },
-                new ItemReview() { Score = 1 }
-            };
-
             Guild guild = new Guild()
             {
                 GuildName = "T1",
