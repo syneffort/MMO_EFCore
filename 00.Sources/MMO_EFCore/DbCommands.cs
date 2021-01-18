@@ -9,7 +9,7 @@ using Newtonsoft.Json;
 namespace MMO_EFCore
 {
     // Entity State
-    // 0) Detached : Notracking 상태, 추적되지 않아 Savechange 해도 영향 djqtdma
+    // 0) Detached : Notracking 상태, 추적되지 않아 Savechange 해도 영향 X
     // 1) Unchanged : DB에는 있으나 수정 사항은 없음, Savechange 해도 영향 X
     // 2) Deleted : DB에는 있으나 삭제되어야 함, Savechange 시 적용
     // 3) Modified : DB에 있고 수정이 발생함, Savechange 시 적용
@@ -54,7 +54,7 @@ namespace MMO_EFCore
         public static void CreateTestData(AppDbContext db)
         {
             Player synk = new Player() { Name = "SynK" };
-            Player faker = new Player() { };
+            Player faker = new Player() { Name = "Faker" };
             Player deft = new Player() { Name = "Deft" };
 
             //Console.WriteLine(db.Entry(synk).State); // Detached
@@ -86,9 +86,38 @@ namespace MMO_EFCore
             db.Items.AddRange(Items);
             db.Guilds.Add(guild);
 
-            //Console.WriteLine(db.Entry(synk).State); // Added
+            // Added
+            Console.WriteLine($"Sate1 : {db.Entry(synk).State}"); // Added
 
             db.SaveChanges();
+
+            // Add Test
+            {
+                Item item = new Item()
+                {
+                    TemplateId = 500,
+                    Owner = synk
+                };
+
+                db.Items.Add(item); // 간접적으로 Player에 영향을 줌
+                // Player는 Tracking 상태이고, FK는 없으므로 현 상태 유지 (Unchanged)
+                Console.WriteLine($"Sate2 : {db.Entry(synk).State}"); // Unchanged
+            }
+
+            // Delete Test
+            {
+                Player p = db.Players.First();
+
+                // 아직 DB에 등록되지 않은 정보 (DB 키 없음)
+                p.Guild = new Guild() { GuildName = "곧 사라질 길드" };
+                // 이미 Item이 등록되어 DB 발급키 존재함
+                p.OwnedItem = Items[0];
+
+                db.Players.Remove(p);
+                Console.WriteLine($"State3 : {db.Entry(p).State}"); // Deleted
+                Console.WriteLine($"State4 : {db.Entry(p.Guild).State}"); // Added
+                Console.WriteLine($"State5 : {db.Entry(p.OwnedItem).State}"); // Deleted (Player가 삭제되기 때문)
+            }
         }
 
         public static void ShowItems()
