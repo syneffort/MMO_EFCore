@@ -19,6 +19,7 @@ namespace MMO_EFCore
             Console.WriteLine("명령어를 입력하세요");
             Console.WriteLine("[0] Force reset");
             Console.WriteLine("[1] Show items");
+            Console.WriteLine("[2] Test update attach");
 
             while (true)
             {
@@ -33,7 +34,7 @@ namespace MMO_EFCore
                         DbCommands.ShowItems();
                         break;
                     case "2":
-                        DbCommands.CalcAverage();
+                        DbCommands.TestUpdateAtttach();
                         break;
                     case "3":
                         break;

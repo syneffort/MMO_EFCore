@@ -66,16 +66,16 @@ namespace MMO_EFCore
                     TemplateId = 101,
                     Owner = synk
                 },
-                new Item()
-                {
-                    TemplateId = 102,
-                    Owner = faker
-                },
-                new Item()
-                {
-                    TemplateId = 103,
-                    Owner = deft
-                },
+                //new Item()
+                //{
+                //    TemplateId = 102,
+                //    Owner = faker
+                //},
+                //new Item()
+                //{
+                //    TemplateId = 103,
+                //    Owner = deft
+                //},
             };
             Guild guild = new Guild()
             {
@@ -152,17 +152,38 @@ namespace MMO_EFCore
             }
         }
 
-        public static void CalcAverage()
+        public static void TestUpdateAtttach()
         {
             using (AppDbContext db = new AppDbContext())
             {
-                foreach (double? average in db.Items.Select(i => Program.GetAverageReviewScore(i.ItemId)))
+                // Update test
                 {
-                    if (average == null)
-                        Console.WriteLine("No review");
-                    else
-                        Console.WriteLine($"Average({average.Value})");
+                    // Disconnect
+                    Player p = new Player();
+                    p.PlayerId = 2;
+                    p.Name = "Boss Faker";
+                    p.Guild = new Guild { GuildName = "Update Guild" }; // DB가 알지못하는 새로운 길드정보
+
+                    Console.WriteLine($"State6 : {db.Entry(p.Guild).State}"); // Detached
+                    db.Players.Update(p);
+                    Console.WriteLine($"State7 : {db.Entry(p.Guild).State}"); // Added
                 }
+
+                // Attach test
+                {
+                    Player p = new Player();
+
+                    p.PlayerId = 3;
+                    //p.Name = "Slave Deft"; // Attach 이전 Untracked이기 때문에 DB에 반영되지 못함
+                    p.Guild = new Guild() { GuildName = "Attach Guild" };
+
+                    Console.WriteLine($"State8 : {db.Entry(p.Guild).State}"); // Detached
+                    db.Players.Attach(p);
+                    p.Name = "Slave Deft"; // Tracked 상태 이후 변경시 반영됨, 위에서와 동일한 이름으로 입력 시 Modified 플래스 변동 안됨 (문제 발생 가능)
+                    Console.WriteLine($"State9 : {db.Entry(p.Guild).State}"); // Added
+                }
+
+                db.SaveChanges();
             }
         }
     }
