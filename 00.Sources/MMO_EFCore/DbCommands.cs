@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage;
 using Newtonsoft.Json;
@@ -90,34 +91,6 @@ namespace MMO_EFCore
             Console.WriteLine($"Sate1 : {db.Entry(synk).State}"); // Added
 
             db.SaveChanges();
-
-            // Add Test
-            {
-                Item item = new Item()
-                {
-                    TemplateId = 500,
-                    Owner = synk
-                };
-
-                db.Items.Add(item); // 간접적으로 Player에 영향을 줌
-                // Player는 Tracking 상태이고, FK는 없으므로 현 상태 유지 (Unchanged)
-                Console.WriteLine($"Sate2 : {db.Entry(synk).State}"); // Unchanged
-            }
-
-            // Delete Test
-            {
-                Player p = db.Players.First();
-
-                // 아직 DB에 등록되지 않은 정보 (DB 키 없음)
-                p.Guild = new Guild() { GuildName = "곧 사라질 길드" };
-                // 이미 Item이 등록되어 DB 발급키 존재함
-                p.OwnedItem = Items[0];
-
-                db.Players.Remove(p);
-                Console.WriteLine($"State3 : {db.Entry(p).State}"); // Deleted
-                Console.WriteLine($"State4 : {db.Entry(p.Guild).State}"); // Added
-                Console.WriteLine($"State5 : {db.Entry(p.OwnedItem).State}"); // Deleted (Player가 삭제되기 때문)
-            }
         }
 
         public static void ShowItems()
@@ -152,38 +125,48 @@ namespace MMO_EFCore
             }
         }
 
-        public static void TestUpdateAtttach()
+        public static void Test()
         {
             using (AppDbContext db = new AppDbContext())
             {
-                // Update test
+                // State 조작
                 {
-                    // Disconnect
-                    Player p = new Player();
-                    p.PlayerId = 2;
-                    p.Name = "Boss Faker";
-                    p.Guild = new Guild { GuildName = "Update Guild" }; // DB가 알지못하는 새로운 길드정보
-
-                    Console.WriteLine($"State6 : {db.Entry(p.Guild).State}"); // Detached
-                    db.Players.Update(p);
-                    Console.WriteLine($"State7 : {db.Entry(p.Guild).State}"); // Added
+                    Player p = new Player() { Name = "StateTest" };
+                    db.Entry(p).State = EntityState.Added; // Tracked로 변환
+                    db.SaveChanges();
                 }
 
-                // Attach test
+                // TrackGraph
                 {
-                    Player p = new Player();
+                    // Disconnect 상태에서 플레이어 이름만 갱신하려고 함
+                    Player p = new Player()
+                    {
+                        PlayerId = 2,
+                        Name = "Track_Faker"
+                    };
 
-                    p.PlayerId = 3;
-                    //p.Name = "Slave Deft"; // Attach 이전 Untracked이기 때문에 DB에 반영되지 못함
-                    p.Guild = new Guild() { GuildName = "Attach Guild" };
+                    p.OwnedItem = new Item() { ItemId = 777 };
+                    p.Guild = new Guild() { GuildName = "Track_Guild" };
 
-                    Console.WriteLine($"State8 : {db.Entry(p.Guild).State}"); // Detached
-                    db.Players.Attach(p);
-                    p.Name = "Slave Deft"; // Tracked 상태 이후 변경시 반영됨, 위에서와 동일한 이름으로 입력 시 Modified 플래스 변동 안됨 (문제 발생 가능)
-                    Console.WriteLine($"State9 : {db.Entry(p.Guild).State}"); // Added
+                    db.ChangeTracker.TrackGraph(p, e =>
+                    {
+                        if (e.Entry.Entity is Player)
+                        {
+                            e.Entry.State = EntityState.Unchanged;
+                            e.Entry.Property("Name").IsModified = true;
+                        }
+                        else if (e.Entry.Entity is Guild)
+                        {
+                            e.Entry.State = EntityState.Unchanged;
+                        }
+                        else if (e.Entry.Entity is Item)
+                        {
+                            e.Entry.State = EntityState.Unchanged;
+                        }
+                    });
+
+                    db.SaveChanges();
                 }
-
-                db.SaveChanges();
             }
         }
     }

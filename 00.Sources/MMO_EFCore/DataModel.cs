@@ -29,12 +29,20 @@ namespace MMO_EFCore
         public int ItemGrade { get; set; }
     }
 
+    // 만들어진 시간 추적
+    public interface ILogEntity
+    {
+        DateTime CreateTime { get; }
+        void SetCreateTime();
+    }
+
     // Entity 클래스 이름 = 테이블 이름 = Player
     [Table("Player")]
-    public class Player
+    public class Player : ILogEntity
     {
         // 클래스명Id -> PK
         public int PlayerId { get; set; } 
+
         [Required]
         [MaxLength(20)]
         public string Name { get; set; }
@@ -43,6 +51,13 @@ namespace MMO_EFCore
         public Item OwnedItem { get; set; }
 
         public Guild Guild { get; set; }
+
+        public DateTime CreateTime { get; private set; }
+
+        public void SetCreateTime()
+        {
+            CreateTime = DateTime.Now;
+        }
     }
 
     [Table("Guild")]
